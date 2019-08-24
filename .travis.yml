@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jsantodo/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run jsantodo/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t jsantodo/multi-client ./client
+  - docker build -t jsantodo/multi-nginx ./nginx
+  - docker build -t jsantodo/multi-server ./server
+  - docker build -t jsantodo/multi-worker ./worker
+  
+  #Log into Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Take those images and push them into Docker hub
+  - docker push jsantodo/multi-client
+  - docker push jsantodo/multi-nginx
+  - docker push jsantodo/multi-server
+  - docker push jsantodo/multi-worker
